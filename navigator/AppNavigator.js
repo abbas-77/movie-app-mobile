@@ -5,10 +5,16 @@ import HomeScreen from "../screens/HomeScreen";
 import MovieScreen from "../screens/MovieScreen";
 import PersonScreen from "../screens/PersonScreen";
 import SearchScreen from "../screens/SearchScreen";
+import { fetchUpcomingMovies } from "../api/MovieDB";
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
+  // const getUpcomingMovies = async () => {
+  //   return data;
+  // };
+
+  // const data = fetchUpcomingMovies();
   return (
     <NavigationContainer>
       <Stack.Navigator>
@@ -20,6 +26,7 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Movie"
           component={MovieScreen}
+          // initialParams={data}
           options={{ headerShown: false }}
         />
         <Stack.Screen

@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   ScrollView,
@@ -16,14 +16,44 @@ import { styles } from "../theme";
 import TrendingMovies from "../components/TrendingMovies";
 import MovieList from "../components/MovieList";
 import { useNavigation } from "@react-navigation/native";
+import Loading from "../components/Loading";
+import {
+  fetchTopRatedMovies,
+  fetchTrendingMovies,
+  fetchUpcomingMovies,
+} from "../api/MovieDB";
 
 const ios = Platform.OS === "ios";
 
 const HomeScreen = () => {
-  const [trending, setTreanding] = useState([1, 2, 3]);
-  const [upcoming, setUpcoming] = useState([1, 2, 3]);
-  const [topRated, setTopRated] = useState([1, 2, 3]);
+  const [trending, setTreanding] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [topRated, setTopRated] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
+
+  const getTrendingMovies = async () => {
+    const data = await fetchTrendingMovies();
+    if (data && data.results) setTreanding(data.results);
+    setLoading(false);
+  };
+
+  const getUpcomingMovies = async () => {
+    const data = await fetchUpcomingMovies();
+    if (data && data.results) setUpcoming(data.results);
+    // console.log("------------------------", upcoming);
+  };
+
+  const getTopRatedMovies = async () => {
+    const data = await fetchTopRatedMovies();
+    if (data && data.results) setTopRated(data.results);
+  };
+
+  useEffect(() => {
+    getTrendingMovies();
+    getUpcomingMovies();
+    getTopRatedMovies();
+  }, []);
 
   return (
     <View className="flex-1 bg-neutral-800">
@@ -41,17 +71,25 @@ const HomeScreen = () => {
         </View>
       </SafeAreaView>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 10 }}
-      >
-        {/* Trending movies carousel */}
-        <TrendingMovies data={trending} />
-        {/* upcoming movies row */}
-        <MovieList title="Up Coming" data={upcoming} />
-        {/* top rated movies row */}
-        <MovieList title="Top Rated" data={topRated} />
-      </ScrollView>
+      {loading ? (
+        <Loading />
+      ) : (
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 10 }}
+        >
+          {/* Trending movies carousel */}
+          {trending.length && <TrendingMovies data={trending} />}
+          {/* upcoming movies row */}
+          {upcoming.length > 0 && (
+            <MovieList title="Upcoming" data={upcoming} />
+          )}
+          {/* top rated movies row */}
+          {topRated.length > 0 && (
+            <MovieList title="Top Rated" data={topRated} />
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 };

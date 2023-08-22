@@ -16,19 +16,51 @@ import { styles, theme } from "../theme";
 import { LinearGradient } from "expo-linear-gradient";
 import Cast from "../components/Cast";
 import MovieList from "../components/MovieList";
+import Loading from "../components/Loading";
+import {
+  fallbackMoviePoster,
+  fetchMovieCredits,
+  fetchMovieDetails,
+  fetchSimilarMovies,
+  image342,
+  image500,
+} from "../api/MovieDB";
 
 let { width, height } = Dimensions.get("window");
 
 const MovieScreen = () => {
-  const movieName = "Ant-Man and the Wasp: Quantumania";
   const { params: item } = useRoute();
   const navigation = useNavigation();
   const [isFavorite, toggleFavorite] = useState("");
-  const [similarMovies, setSimilarMovies] = useState([1, 2, 3, 4, 5]);
-  const [cast, useCast] = useState([1, 2, 3, 4, 5]);
+  const [movie, setMovie] = useState({});
+  const [similarMovies, setSimilarMovies] = useState([]);
+  const [cast, setCast] = useState([]);
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    // call the moviedetails api
+    setLoading(true);
+    getMovieDetials(item.id);
+    getMovieCredits(item.id);
+    getSimilarMovies(item.id);
   }, [item]);
+
+  const getMovieDetials = async (id) => {
+    const data = await fetchMovieDetails(id);
+    if (data) setMovie(data);
+    setLoading(false);
+  };
+  const getMovieCredits = async (id) => {
+    const data = await fetchMovieCredits(id);
+    if (data && data.cast) {
+      setCast(data.cast);
+    }
+  };
+  const getSimilarMovies = async (id) => {
+    const data = await fetchSimilarMovies(id);
+    if (data && data.results) {
+      setSimilarMovies(data.results);
+    }
+  };
   return (
     <ScrollView
       contentContainerStyle={{ paddingBottom: 20 }}
@@ -53,57 +85,72 @@ const MovieScreen = () => {
             />
           </TouchableHighlight>
         </SafeAreaView>
-        <View>
-          <Image
-            source={require("../assets/images/moviePoster2.png")}
-            style={{ width, height: height * 0.55 }}
-          />
-          <LinearGradient
-            colors={["transparent", "rgba(23,23,23,0.8)", "rgba(23,23,23,1)"]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={{ width, height: height * 0.4 }}
-            className="absolute bottom-0"
-          />
-        </View>
+        {loading ? (
+          <Loading />
+        ) : (
+          <View>
+            <Image
+              // source={require("../assets/images/moviePoster2.png")}
+              source={{
+                uri: image500(movie?.poster_path) || fallbackMoviePoster,
+              }}
+              style={{ width, height: height * 0.55 }}
+            />
+            <LinearGradient
+              colors={["transparent", "rgba(23,23,23,0.8)", "rgba(23,23,23,1)"]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{ width, height: height * 0.4 }}
+              className="absolute bottom-0"
+            />
+          </View>
+        )}
       </View>
       {/* movie details */}
       <View style={{ marginBottom: -(height * 0.02) }} className="space-y-3">
         {/* title */}
         <Text className="text-white text-center text-3xl font-bold tracking-wider">
-          {movieName}
+          {movie.title}
         </Text>
         {/* status, relese, runtime */}
-        <Text className="text-neutral-400 font-semibold text-base text-center">
-          Released . 2020 . 170min
-        </Text>
+        {movie?.id ? (
+          <Text className="text-neutral-400 font-semibold text-base text-center">
+            {movie?.status} . {movie?.release_date.split("-")[0]} .{" "}
+            {movie?.runtime} min
+          </Text>
+        ) : null}
+
         {/* genres */}
         <View className="flex-row justify-center mx-4 space-x-2">
-          <Text className="text-neutral-400 font-semibold text-base text-center">
-            Action .
-          </Text>
-          <Text className="text-neutral-400 font-semibold text-base text-center">
-            thrill .
-          </Text>
-          <Text className="text-neutral-400 font-semibold text-base text-center">
-            comedy
-          </Text>
+          {movie?.genres?.map((genre, index) => {
+            let showDot = index + 1 != movie?.genres?.length;
+            return (
+              <Text
+                key={index}
+                className="text-neutral-400 font-semibold text-base text-center"
+              >
+                {genre?.name} {showDot ? "." : null}
+              </Text>
+            );
+          })}
         </View>
         {/* describtion */}
         <Text className="text-neutral-400 mx-4 tracking-wide">
-          In this example, there are 2 screens (Home and Profile) defined using
-          the Stack.Screen component. Similarly, you can define as many screens
-          as you like. You can set options such as the screen title for each
-          screen in the options prop of Stack.Screen. Each screen takes a
-          component prop that is a React component. Those components receive a
-          prop called navigation which has various methods to link to other
-          screens. For example, you can use navigation.navigate to go to the
-          Profile screen:
+          {movie?.overview}
         </Text>
         {/* cast */}
-        <Cast navigation={navigation} cast={cast} />
-        {/* simiular movies */}
-        <MovieList title="Similar Movies" data={similarMovies} hideSeeAll={true} />
+        {movie?.id && cast.length > 0 && (
+          <Cast navigation={navigation} cast={cast} />
+        )}
+
+        {/* similar movies section */}
+        {movie?.id && similarMovies.length > 0 && (
+          <MovieList
+            title={"Similar Movies"}
+            hideSeeAll={true}
+            data={similarMovies}
+          />
+        )}
       </View>
     </ScrollView>
   );

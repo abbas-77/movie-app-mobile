@@ -10,11 +10,11 @@ import {
 import React from "react";
 import { styles } from "../theme";
 import { useNavigation } from "@react-navigation/native";
+import { fallbackMoviePoster, image185, image500 } from "../api/MovieDB";
 
 let { width, height } = Dimensions.get("window");
 
 const MovieList = ({ title, data, hideSeeAll }) => {
-  const movieName = "Ant-Man and the Wasp: Quantumania";
   const navigation = useNavigation();
   return (
     <View className="mb-8 space-y-4">
@@ -35,25 +35,28 @@ const MovieList = ({ title, data, hideSeeAll }) => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 15 }}
       >
-        {data.map(({ item, index }) => {
+        {data.map((item, index) => {
           return (
             <TouchableWithoutFeedback
               key={index}
-              onPress={() => navigation.navigate("movie", item)}
+              onPress={() => navigation.navigate("Movie", item)}
             >
               <View className="space-y-1 ml-4">
                 <Image
-                  source={require("../assets/images/moviePoster2.png")}
+                  // source={require("../assets/images/moviePoster2.png")}
+                  source={{
+                    uri: image185(item.poster_path) || fallbackMoviePoster,
+                  }}
                   style={{
-                    width: width * 0.38,
-                    height: height * 0.38,
+                    width: width * 0.4,
+                    height: height * 0.28,
                     borderRadius: 20,
                   }}
                 />
                 <Text className="text-neutral-300 ml-1">
-                  {movieName.length > 14
-                    ? movieName.slice(0, 14) + "..."
-                    : movieName}
+                  {item.title.length > 14
+                    ? item.title.slice(0, 14) + "..."
+                    : item.title}
                 </Text>
               </View>
             </TouchableWithoutFeedback>
